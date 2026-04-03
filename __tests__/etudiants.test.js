@@ -85,7 +85,10 @@ describe('GET /api/etudiants/:id', () => {
     const res = await request(app).get(`/api/etudiants/${fakeId}`);
     expect(res.statusCode).toBe(404);
   });
-
+  test('retourne 400 pour un ID mal formaté', async () => {
+    const res = await request(app).get('/api/etudiants/pas-un-id-valide');
+    expect(res.statusCode).toBe(400);
+  });
 });
 
 
@@ -131,3 +134,30 @@ describe('DELETE /api/etudiants/:id', () => {
   });
 
 });
+  test('retourne 400 si la moyenne est négative', async () => {
+    const res = await request(app)
+      .post('/api/etudiants')
+      .send({ nom: 'Dupont', prenom: 'Alice', "email": "Dupont.Alice@ecole.tn",
+    "filiere": "Informatique",
+    "annee": 2,moyenne: -5 });
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toBeDefined();
+  });
+
+  test('retourne 400 si la moyenne dépasse 20', async () => {
+    const res = await request(app)
+      .post('/api/etudiants')
+      .send({ nom: 'Dupont', prenom: 'Alice', "email": "Dupont.Alice@ecole.tn",
+    "filiere": "Informatique",
+    "annee": 2,moyenne: 25 });
+    expect(res.statusCode).toBe(400);
+  });
+
+  test('retourne 400 si la moyenne n\'est pas un nombre', async () => {
+    const res = await request(app)
+      .post('/api/etudiants')
+      .send({ nom: 'Dupont', prenom: 'Alice', "email": "Dupont.Alice@ecole.tn",
+    "filiere": "Informatique",
+    "annee": 2,moyenne: 'bonne' });
+    expect(res.statusCode).toBe(400);
+  });

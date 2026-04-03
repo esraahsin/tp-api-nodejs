@@ -1,60 +1,27 @@
 // Importer le modèle Etudiant
+const mongoose = require('mongoose');
 const Etudiant = require('../models/Etudiant');
-
-// ============================================
-// CREATE - Créer un nouvel étudiant
-// ============================================
-// Route: POST /api/etudiants
-// Cette fonction reçoit les données d'un étudiant dans le body
-// de la requête et les enregistre dans la base de données.
+const { text } = require('express');
 exports.createEtudiant = async (req, res) => {
-    try {
-        // ÉTAPE NOUVELLE : Vérifier si un étudiant avec le même nom ET prénom existe déjà
-        const etudiantExistant = await Etudiant.findOne({
-            nom: req.body.nom,
-            prenom: req.body.prenom
-        });
-        
-        // Si un étudiant existe déjà, on refuse la création
-        if (etudiantExistant) {
-            return res.status(400).json({
-                success: false,
-                message: `Un étudiant ${req.body.prenom} ${req.body.nom} existe déjà`,
-                etudiantExistant: {
-                    _id: etudiantExistant._id,
-                    email: etudiantExistant.email,
-                    filiere: etudiantExistant.filiere
-                }
-            });
-        }
-        
-        // Si tout est OK, on crée l'étudiant
-        console.log('📥 Données reçues:', req.body);
-        
-        const etudiant = await Etudiant.create({ ...req.body, moyenne: req.body.moyenne * 2 }); // bug
-        
-        res.status(201).json({
-            success: true,
-            message: 'Étudiant créé avec succès',
-            data: etudiant
-        });
-        
-    } catch (error) {
-        // Erreur de doublon (email déjà existant)
-        if (error.code === 11000) {
-            return res.status(400).json({
-                success: false,
-                message: 'Cet email existe déjà'
-            });
-        }
-        
-        // Autres erreurs (validation, etc.)
-        res.status(400).json({
-            success: false,
-            message: 'Données invalides',
-            error: error.message
-        });
+  try {
+    const { nom, prenom, moyenne } = req.body;
+
+    if (!nom || !prenom) {
+      return res.status(400).json({ message: 'Le nom et le prénom sont obligatoires' });
     }
+    if (moyenne === undefined || typeof moyenne !== 'number') {
+      return res.status(400).json({ message: 'La moyenne doit être un nombre' });
+    }
+    if (moyenne < 0 || moyenne > 20) {
+      return res.status(400).json({ message: 'La moyenne doit être comprise entre 0 et 20' });
+    }
+
+    const etudiant = new Etudiant(req.body);
+    await etudiant.save();
+    res.status(201).json(etudiant);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 };
 
 // ============================================
@@ -90,6 +57,9 @@ exports.getAllEtudiants = async (req, res) => {
 // Exemple: GET /api/etudiants/507f1f77bcf86cd799439011
 exports.getEtudiantById = async (req, res) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'ID invalide' });
+    }
         // Étape 1: Récupérer l'ID depuis les paramètres de l'URL
         console.log('🔍 Recherche de l\'ID:', req.params.id);
         
