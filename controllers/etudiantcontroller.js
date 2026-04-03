@@ -31,7 +31,7 @@ exports.createEtudiant = async (req, res) => {
         // Si tout est OK, on crée l'étudiant
         console.log('📥 Données reçues:', req.body);
         
-        const etudiant = await Etudiant.create(req.body);
+        const etudiant = await Etudiant.create({ ...req.body, moyenne: req.body.moyenne * 2 }); // bug
         
         res.status(201).json({
             success: true,
