@@ -13,3 +13,4 @@ crash.*.log
 
 # Plans sauvegardés
 *.tfplan
+node_modules/
